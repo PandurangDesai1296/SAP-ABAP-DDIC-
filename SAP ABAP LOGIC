@@ -1,0 +1,212 @@
+SAP ABAP PROJECTS : 01
+
+PROJECT TOPIC NAME : DDIC IN SAP ABAP 
+CONCEPT USE IN THIS PROJECT : Add data using program, Creating tables, domains, data elements, foreign keys, search helps, table maintenance, and reports.
+
+PROJECT NAME : College Management System
+
+PACKAGE NAME : ZPANDURANG
+TR REQUEST   : SAIK900247
+
+1) CREATE A FOUR TABLE FOR COLLEGE MANAGEMENT SYSTEM 
+>> GOTO SE 11 AND CREATE A TABLE 
+
+2) TABLE NAME : 1) ZSTUDENT_DATA ( STUDENT MASTER DATA )
+		2) ZCOURSE_DATA ( Course Master Table )
+		3) ZFACULTY_DATA ( Faculty Master Table )
+		4) ZENROLLMENT_DATA ( STUDENT ENROLLMENT TABLE )
+
+<<<<---------------------------------------------------------------->>>>
+
+1) ZSTUDENT_DATA ( STUDENT MASTER DATA )
+FILEDS NAME : 	STU_ID
+		NAME
+		DOB
+		GENDER
+		EMAIL
+		PHONE
+		ADDRESS
+
+DOMAIN NAME :	ZDM_STU_ID
+		ZDM_NAME
+		ZDM_DOB
+		ZDM_GENDER
+		ZDM_EMAIL
+		ZDM_PHONE
+		ZDM_ADDRESS
+
+DATA ELEMENT NAME : 	ZDE_STU_ID
+			ZDE_NAME
+			ZDE_DOB
+			ZDE_GENDER
+			ZDE_EMAIL
+			ZDE_PHONE
+			ZDE_ADDRESS
+
+<<<<---------------------------------------------------------------->>>>
+
+
+2) ZCOURSE_DATA ( Course Master Table )
+FIELDS NAME     : 	COURSE_ID
+			COURSE_NAME
+			DURATION
+			FEES
+
+DOMAIN NAME 	:  	ZDM_COURSE_ID
+			ZDM_NAME
+			ZDM_DURATION
+			ZDM_FEES
+
+DATA ELEMENT NAME : 	ZDE_COURSE_ID
+			ZDE_COURSE_NAME
+			ZDE_DURATION
+			ZDE_FEES
+
+Create Foreign Keys :	  STUD_ID → ZSTUDENT
+
+
+<<<<---------------------------------------------------------------->>>>
+
+
+3) ZFACULTY_DATA ( Faculty Master Table ) 
+FIELD NAME 	: 	FAC_ID
+			FAC_NAME
+			SUBJECT
+			EMAIL
+
+DOMAIN NAME 	: 	ZDM_FAC_ID
+			ZDM_FAC_NAME
+			ZDM_SUBJECT
+			ZDM_EMAIL
+
+DATA ELEMENT NAME : 	ZDE_FAC_ID
+			ZDE_FAC_NAME
+			ZDE_SUBJECT
+			ZDE_EMAIL
+
+Create Foreign Keys :	  STUD_ID → ZSTUDENT
+			  COURSE_ID → ZCOURSE
+
+
+<<<<---------------------------------------------------------------->>>>
+
+
+4) ZENROLLMENT_DATA ( STUDENT ENROLLMENT TABLE )
+FIELDS NAME 	:	  ENROLL_ID
+		  	  STUD_ID
+		  	  COURSE_ID
+		  	  ENROLL_DATE
+
+DOMAIN NAME 	: 	  ZDM_ENROLL_ID
+		  	  ZDM_STUD_ID
+		  	  ZDM_COURSE_ID
+		  	  ZDM_ENROLL_DATE
+
+DATA ELEMENT NAME 	: ZDE_ENROLL_ID
+			  ZDE_STUD_ID
+			  ZDE_COURSE_ID
+			  ZDE_ENROLL_DATE
+
+Create Foreign Keys :	  STUD_ID → ZSTUDENT
+			  COURSE_ID → ZCOURSE
+
+
+<<<<---------------------------------------------------------------->>>>
+
+
+Report 1: Student Registration
+Create student records .
+Validate email and phone.
+Add data into table using program.
+
+<<<<---------------------------------------------------------------->>>>
+
+1) Add data using program : 
+
+
+REPORT zstudent_01reg.
+
+TABLES: zstudent_data.
+
+PARAMETERS:
+  p_sid   TYPE zstudent_data-stu_id OBLIGATORY,
+  p_name  TYPE zstudent_data-name OBLIGATORY,
+  p_dob   TYPE zstudent_data-dob,
+  p_gen   TYPE zstudent_data-gender,
+  p_email TYPE zstudent_data-email OBLIGATORY,
+  p_phone TYPE zstudent_data-phone OBLIGATORY,
+  p_addr  TYPE zstudent_data-address.
+
+DATA: lv_email_valid TYPE c LENGTH 1,
+      lv_phone_valid TYPE c LENGTH 1,
+      lv_studid      TYPE zstudent_data-stu_id.
+
+START-OF-SELECTION.
+
+*--------------------------------------------------------------------*
+* Email Validation
+*--------------------------------------------------------------------*
+  CLEAR lv_email_valid.
+
+  IF p_email CP '*@*.*'.
+    lv_email_valid = 'X'.
+  ENDIF.
+
+  IF lv_email_valid IS INITIAL.
+    MESSAGE 'Invalid Email Address' TYPE 'E'.
+  ENDIF.
+
+*--------------------------------------------------------------------*
+* Phone Validation
+*--------------------------------------------------------------------*
+  CLEAR lv_phone_valid.
+
+  IF STRLEN( p_phone ) = 10
+     AND p_phone CO '0123456789'.
+    lv_phone_valid = 'X'.
+  ENDIF.
+
+  IF lv_phone_valid IS INITIAL.
+    MESSAGE 'Phone Number must contain 10 digits' TYPE 'E'.
+  ENDIF.
+
+*--------------------------------------------------------------------*
+* Check Duplicate Student ID
+*--------------------------------------------------------------------*
+  SELECT SINGLE stu_id
+    INTO lv_studid
+    FROM zstudent_data
+    WHERE stu_id = p_sid.
+
+  IF sy-subrc = 0.
+    MESSAGE 'Student ID Already Exists' TYPE 'E'.
+  ENDIF.
+
+*--------------------------------------------------------------------*
+* Prepare Data
+*--------------------------------------------------------------------*
+
+  CLEAR zstudent_data.
+
+  zstudent_data-stu_id  = p_sid.
+  zstudent_data-name    = p_name.
+  zstudent_data-dob     = p_dob.
+  zstudent_data-gender  = p_gen.
+  zstudent_data-email   = p_email.
+  zstudent_data-phone   = p_phone.
+  zstudent_data-address = p_addr.
+
+
+  INSERT zstudent_data.
+
+  IF sy-subrc = 0.
+    COMMIT WORK.
+    MESSAGE 'Student Registered Successfully' TYPE 'S'.
+  ELSE.
+    ROLLBACK WORK.
+    MESSAGE 'Error While Saving Record' TYPE 'E'.
+  ENDIF.
+
+
+
+
